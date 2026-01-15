@@ -1,20 +1,23 @@
 FROM node:22-alpine
 
+# On installe les libs nécessaires pour les binaires natifs
+RUN apk add --no-cache openssl libc6-compat libstdc++
+
 WORKDIR /usr/src/app
 
-# 1. On copie SEULEMENT les fichiers de dépendances
+# On copie les fichiers de dépendances
 COPY package*.json ./
 
-# 2. On installe PROPREMENT dans l'environnement Linux de Docker
+# On installe TOUT (y compris Prisma)
 RUN npm install
 
-# 3. On copie le dossier prisma AVANT le reste pour générer le client
+# On copie le dossier prisma
 COPY prisma ./prisma/
 
-# 4. On génère le client Prisma
+# On génère le client (Le moteur binaire sera téléchargé ici grâce au schema.prisma)
 RUN npx prisma generate
 
-# 5. MAINTENANT on copie le reste du code
+# On copie le reste du code
 COPY . .
 
 RUN npm run build
