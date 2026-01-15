@@ -1,23 +1,23 @@
-# On utilise Node 22 pour la stabilité en conteneur
 FROM node:22-alpine
 
 WORKDIR /usr/src/app
 
-# Installation des dépendances
+# 1. On copie SEULEMENT les fichiers de dépendances
 COPY package*.json ./
+
+# 2. On installe PROPREMENT dans l'environnement Linux de Docker
 RUN npm install
 
-# Copie du code source
-COPY . .
+# 3. On copie le dossier prisma AVANT le reste pour générer le client
+COPY prisma ./prisma/
 
-# Génération du client Prisma (Crucial avant le build)
+# 4. On génère le client Prisma
 RUN npx prisma generate
 
-# Build de l'application NestJS
+# 5. MAINTENANT on copie le reste du code
+COPY . .
+
 RUN npm run build
 
-# Exposition du port
 EXPOSE 4000
-
-# Lancement de l'app
 CMD ["npm", "run", "start:prod"]
