@@ -1,0 +1,41 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type Assignment {
+  date: DateTime!
+  id: ID!
+  site: Site!
+  team: Team!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mutation {
+  createAssignment(date: String!, siteId: String!, teamId: String!): Assignment!
+}
+
+type Query {
+  assignments: [Assignment!]!
+  sites: [Site!]!
+  teams: [Team!]!
+}
+
+type Site {
+  address: String!
+  endDate: DateTime!
+  id: ID!
+  name: String!
+  startDate: DateTime!
+  status: String!
+}
+
+type Team {
+  id: ID!
+  members: Int!
+  name: String!
+  specialty: String!
+}

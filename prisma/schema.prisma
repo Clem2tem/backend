@@ -1,0 +1,37 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Site {
+  id          String       @id @default(uuid())
+  name        String
+  address     String
+  startDate   DateTime
+  endDate     DateTime
+  status      String       @default("PLANNED") // PLANNED, IN_PROGRESS, COMPLETED
+  assignments Assignment[]
+}
+
+model Team {
+  id          String       @id @default(uuid())
+  name        String
+  specialty   String
+  members     Int
+  assignments Assignment[]
+}
+
+model Assignment {
+  id        String   @id @default(uuid())
+  siteId    String
+  teamId    String
+  date      DateTime
+  site      Site     @relation(fields: [siteId], references: [id])
+  team      Team     @relation(fields: [teamId], references: [id])
+
+  @@unique([teamId, date]) // Contrainte d'ingénieur : une équipe n'est pas à deux endroits à la fois
+}
