@@ -1,26 +1,28 @@
-FROM node:22-alpine
+FROM node:24-alpine
 
-# On installe les libs nécessaires pour les binaires natifs
-RUN apk add --no-cache openssl libc6-compat libstdc++
+# Installation des dépendances système
+RUN apk add --no-cache openssl libc6-compat
 
 WORKDIR /usr/src/app
 
-# On copie les fichiers de dépendances
+# Installation des dépendances
 COPY package*.json ./
-
-# On installe TOUT (y compris Prisma)
 RUN npm install
 
-# On copie le dossier prisma
+# Copie du schéma Prisma et génération du client
 COPY prisma ./prisma/
-
-# On génère le client (Le moteur binaire sera téléchargé ici grâce au schema.prisma)
 RUN npx prisma generate
 
-# On copie le reste du code
+# Copie de tout le code source
 COPY . .
 
+# CRUCIAL : On lance le build NestJS ici
 RUN npm run build
 
+# VÉRIFICATION : On liste le dossier dist pour être sûr que main.js est là
+RUN ls -la dist/
+
 EXPOSE 4000
-CMD ["npm", "run", "start:prod"]
+
+# Commande de lancement (on vise le fichier généré par le build)
+CMD ["node", "dist/src/main.js"]

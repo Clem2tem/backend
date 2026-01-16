@@ -10,30 +10,54 @@ datasource db {
 }
 
 model Site {
-  id          String       @id @default(uuid())
-  name        String
-  address     String
-  startDate   DateTime
-  endDate     DateTime
-  status      String       @default("PLANNED") // PLANNED, IN_PROGRESS, COMPLETED
-  assignments Assignment[]
+  id            String   @id @default(cuid())
+  name          String
+  address       String?  // Ajout du ? pour le rendre optionnel au cas où
+  status        String   @default("PLANNED")
+  startDate     DateTime
+  endDate       DateTime? // Optionnel car on ne connaît pas toujours la fin
+  tasks         Task[]
+  assignedTeams Team[]   @relation("SiteTeams") 
 }
 
 model Team {
-  id          String       @id @default(uuid())
-  name        String
-  specialty   String
-  members     Int
-  assignments Assignment[]
+  id        String   @id @default(cuid())
+  name      String
+  specialty String
+  workers   Worker[] 
+  sites     Site[]   @relation("SiteTeams")
+  tasks     Task[]
 }
 
-model Assignment {
-  id        String   @id @default(uuid())
-  siteId    String
+model Worker {
+  id        String  @id @default(cuid())
+  firstName String
+  lastName  String
+  phone     String?
+  
   teamId    String
-  date      DateTime
-  site      Site     @relation(fields: [siteId], references: [id])
-  team      Team     @relation(fields: [teamId], references: [id])
+  team      Team    @relation(fields: [teamId], references: [id])
+}
 
-  @@unique([teamId, date]) // Contrainte d'ingénieur : une équipe n'est pas à deux endroits à la fois
+model Task {
+  id        String   @id @default(cuid())
+  title     String
+  category  String   // Ton étiquette métier
+  duration  Int?
+  startDate DateTime?
+
+  // Clés étrangères
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id])
+
+  // Coordonnées pour Vue Flow
+  posX        Float?   @default(0)
+  posY        Float?   @default(0)
+  
+  teamId    String?
+  team      Team?    @relation(fields: [teamId], references: [id])
+
+  // Dépendances pour le flux visuel
+  dependencies Task[] @relation("TaskFlow")
+  dependents   Task[] @relation("TaskFlow")
 }

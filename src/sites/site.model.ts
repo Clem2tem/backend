@@ -1,4 +1,6 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
+import { Team } from '../teams/team.model';
+import { Task } from '../tasks/task.model';
 
 @ObjectType()
 export class Site {
@@ -8,15 +10,21 @@ export class Site {
   @Field()
   name: string;
 
+  @Field({nullable: true})
+  address?: string;
+
   @Field()
-  address: string;
+  status: string;
 
   @Field()
   startDate: Date;
 
-  @Field()
-  endDate: Date;
+  @Field({nullable: true})
+  endDate?: Date;
 
-  @Field()
-  status: string;
+  @Field(() => [Team], { nullable: 'items' })
+  assignedTeams?: Team[];
+
+  @Field(() => [Task], { nullable: 'items' })
+  tasks?: Task[];
 }

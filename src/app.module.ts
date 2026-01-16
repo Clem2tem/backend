@@ -5,7 +5,8 @@ import { join } from 'path';
 import { PrismaService } from './prisma.service';
 import { SitesResolver } from './sites/sites.resolver';
 import { TeamsResolver } from './teams/teams.resolver';
-import { AssignmentsResolver } from './assignments/assignments.resolver';
+import { TasksResolver } from './tasks/tasks.resolver';
+import { WorkersResolver } from './workers/workers.resolver';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import { AssignmentsResolver } from './assignments/assignments.resolver';
     }),
   ],
   controllers: [],
-  providers: [PrismaService, SitesResolver, TeamsResolver, AssignmentsResolver],
+  providers: [PrismaService, SitesResolver, TeamsResolver, TasksResolver, WorkersResolver],
 })
 export class AppModule {}
