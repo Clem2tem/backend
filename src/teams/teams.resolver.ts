@@ -1,5 +1,5 @@
 
-import { Resolver, Query, Mutation, Args, InputType, Field } from '@nestjs/graphql';
+import { ResolveField, Parent, Context, Resolver, Query, Mutation, Args, InputType, Field } from '@nestjs/graphql';
 import { Team } from './team.model';
 import { Worker } from '../workers/worker.model';
 import { PrismaService } from '../prisma.service';
@@ -44,12 +44,14 @@ class AddWorkerInput {
 export class TeamsResolver {
   constructor(private prisma: PrismaService) {}
 
-  // 1. Récupérer toutes les équipes avec leurs ouvriers
   @Query(() => [Team], { name: 'teams' })
   async getTeams() {
-    return this.prisma.team.findMany({
-      include: { workers: true, sites: true },
-    });
+    return this.prisma.team.findMany();
+  }
+
+  @ResolveField(() => [Worker], { name: 'workers' })
+  async workers(@Parent() team: Team, @Context() ctx) {
+    return ctx.workerLoader.load(team.id);
   }
 
   // 2. Créer une nouvelle équipe
