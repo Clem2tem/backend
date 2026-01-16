@@ -1,6 +1,31 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, InputType, Mutation, Args, Field } from '@nestjs/graphql';
 import { Worker } from './worker.model';
 import { PrismaService } from '../prisma.service';
+import { IsNotEmpty, IsUUID, IsOptional, IsString, IsNumber } from 'class-validator';
+
+@InputType()
+class UpdateWorkerInput {
+    @Field()
+    @IsUUID()
+    id: string;
+
+    @Field()
+    @IsUUID()
+    teamId: string;
+
+    @Field({ nullable: true })
+    @IsOptional()
+    @IsString()
+    phone?: string;
+}
+
+@InputType()
+class deleteWorkerInput {
+    @Field()
+    @IsUUID()
+    id: string;
+}
+
 
 @Resolver(() => Worker)
 export class WorkersResolver {
@@ -17,15 +42,13 @@ export class WorkersResolver {
     // Pour modifier les coordonnées d'un ouvrier (ex: changement de téléphone)
     @Mutation(() => Worker)
     async updateWorker(
-        @Args('id') id: string,
-        @Args('teamId') teamId: string,
-        @Args('phone', { nullable: true }) phone?: string,
+        @Args('input') input: UpdateWorkerInput,
     ) {
         return this.prisma.worker.update({
-            where: { id },
+            where: { id: input.id },
             data: {
-                phone,
-                teamId,
+                phone: input.phone,
+                teamId: input.teamId,
             },
             include: { team: true } // Crucial pour que GraphQL récupère les infos de l'équipe
         });
@@ -33,8 +56,8 @@ export class WorkersResolver {
 
     // Pour supprimer un ouvrier qui quitte l'entreprise
     @Mutation(() => Boolean)
-    async deleteWorker(@Args('id') id: string) {
-        await this.prisma.worker.delete({ where: { id } });
+    async deleteWorker(@Args('input') input: deleteWorkerInput) {
+        await this.prisma.worker.delete({ where: { id: input.id } });
         return true;
     }
 }

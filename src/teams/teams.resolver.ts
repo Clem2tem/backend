@@ -1,7 +1,44 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+
+import { Resolver, Query, Mutation, Args, InputType, Field } from '@nestjs/graphql';
 import { Team } from './team.model';
 import { Worker } from '../workers/worker.model';
 import { PrismaService } from '../prisma.service';
+import { IsNotEmpty, IsString, IsUUID, IsOptional } from 'class-validator';
+
+@InputType()
+class CreateTeamInput {
+  @Field()
+  @IsNotEmpty({ message: 'Le nom est requis' })
+  @IsString()
+  name: string;
+
+  @Field()
+  @IsNotEmpty({ message: 'La spécialité est requise' })
+  @IsString()
+  specialty: string;
+}
+
+@InputType()
+class AddWorkerInput {
+  @Field()
+  @IsUUID()
+  teamId: string;
+
+  @Field()
+  @IsNotEmpty({ message: 'Le prénom est requis' })
+  @IsString()
+  firstName: string;
+
+  @Field()
+  @IsNotEmpty({ message: 'Le nom est requis' })
+  @IsString()
+  lastName: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+}
 
 @Resolver(() => Team)
 export class TeamsResolver {
@@ -18,11 +55,13 @@ export class TeamsResolver {
   // 2. Créer une nouvelle équipe
   @Mutation(() => Team)
   async createTeam(
-    @Args('name') name: string,
-    @Args('specialty') specialty: string,
+    @Args('input') input: CreateTeamInput,
   ) {
     return this.prisma.team.create({
-      data: { name, specialty },
+      data: {
+        name: input.name,
+        specialty: input.specialty,
+      },
       include: { workers: true },
     });
   }
@@ -30,17 +69,14 @@ export class TeamsResolver {
   // 3. Ajouter un ouvrier à une équipe spécifique
   @Mutation(() => Worker)
   async addWorkerToTeam(
-    @Args('teamId') teamId: string,
-    @Args('firstName') firstName: string,
-    @Args('lastName') lastName: string,
-    @Args('phone', { nullable: true }) phone?: string,
+    @Args('input') input: AddWorkerInput,
   ) {
     return this.prisma.worker.create({
       data: {
-        firstName,
-        lastName,
-        phone,
-        teamId,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+        teamId: input.teamId,
       },
     });
   }
