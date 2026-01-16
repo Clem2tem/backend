@@ -29,7 +29,8 @@ import DataLoader from 'dataloader';
           }),
           teamLoader: new DataLoader(async (siteIds: readonly string[]) => {
             const teams = await prisma.team.findMany({
-              where: { sites: { some: { id: { in: [...siteIds] } } } }
+              where: { sites: { some: { id: { in: [...siteIds] } } } },
+              include: { sites: true }
             });
             return siteIds.map(siteId =>
               teams.filter(team =>
