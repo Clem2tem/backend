@@ -3,6 +3,7 @@ import { Worker } from './worker.model';
 import { PrismaService } from '../prisma.service';
 import { IsNotEmpty, IsUUID, IsOptional, IsString, IsNumber } from 'class-validator';
 import { Team } from 'src/teams/team.model';
+import { Inject, Injectable } from '@nestjs/common';
 
 @InputType()
 class UpdateWorkerInput {
@@ -27,15 +28,43 @@ class deleteWorkerInput {
     id: string;
 }
 
+@Injectable()
+export class WorkersService {
+    constructor(private prisma: PrismaService) { }
+
+    get() {
+        return this.prisma.worker.findMany();
+    }
+
+    update(input: UpdateWorkerInput) {
+        return this.prisma.worker.update({
+            where: { id: input.id },
+            data: {
+                phone: input.phone,
+                teamId: input.teamId,
+            },
+            include: { team: true } // Crucial pour que GraphQL récupère les infos de l'équipe
+        });
+    }
+
+    delete(input: deleteWorkerInput) {
+        return this.prisma.worker.delete({
+            where: { id: input.id },
+        });
+    }
+
+}
+
+
 
 @Resolver(() => Worker)
 export class WorkersResolver {
-    constructor(private prisma: PrismaService) { }
+    constructor(private workersService: WorkersService) { }
 
     // Pour voir tous les ouvriers du système (pratique pour une vue RH)
     @Query(() => [Worker], { name: 'workers' })
     async getWorkers() {
-        return this.prisma.worker.findMany();
+        return this.workersService.get();
     }
 
     @ResolveField(() => Team, { name: 'team' })
@@ -48,20 +77,23 @@ export class WorkersResolver {
     async updateWorker(
         @Args('input') input: UpdateWorkerInput,
     ) {
-        return this.prisma.worker.update({
-            where: { id: input.id },
-            data: {
-                phone: input.phone,
-                teamId: input.teamId,
-            },
-            include: { team: true } // Crucial pour que GraphQL récupère les infos de l'équipe
-        });
+        try{
+            return this.workersService.update(input);
+        } catch (e) {
+            // Optionnel : logger ou lancer une erreur personnalisée
+            throw new Error('Mise à jour impossible : ' + e.message);
+        }
     }
 
     // Pour supprimer un ouvrier qui quitte l'entreprise
     @Mutation(() => Boolean)
     async deleteWorker(@Args('input') input: deleteWorkerInput) {
-        await this.prisma.worker.delete({ where: { id: input.id } });
-        return true;
+        try {
+            await this.workersService.delete(input);
+            return true;
+        } catch (e) {
+            // Optionnel : logger ou lancer une erreur personnalisée
+            throw new Error('Suppression impossible : ' + e.message);
+        }
     }
 }

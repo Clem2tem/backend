@@ -3,6 +3,7 @@ import { Resolver, Mutation, Args, InputType, Field, Float } from '@nestjs/graph
 import { Task } from './task.model';
 import { PrismaService } from '../prisma.service';
 import { IsNotEmpty, IsUUID, IsOptional, IsString, IsNumber } from 'class-validator';
+import { Injectable } from '@nestjs/common';
 
 @InputType()
 class CreateTaskInput {
@@ -36,14 +37,39 @@ class CreateTaskInput {
   startDate?: string;
 }
 
-@Resolver(() => Task)
-export class TasksResolver {
+@InputType()
+class AddDependencyInput {
+  @Field()
+  @IsUUID()
+  taskId: string;
+
+  @Field()
+  @IsUUID()
+  dependsOnId: string;
+}
+
+@InputType()
+class ChangePositionInput {
+  @Field()
+  @IsUUID()
+  taskId: string;
+
+  @Field(() => Float)
+  @IsNumber()
+  posX: number;
+
+  @Field(() => Float)
+  @IsNumber()
+  posY: number;
+}
+
+
+
+@Injectable()
+export class TasksService {
   constructor(private prisma: PrismaService) {}
 
-  @Mutation(() => Task)
-  async createTask(
-    @Args('input') input: CreateTaskInput,
-  ) {
+  async create(input: CreateTaskInput) {
     return this.prisma.task.create({
       data: {
         title: input.title,
@@ -56,17 +82,44 @@ export class TasksResolver {
     });
   }
 
-  // Mutation cruciale pour ton flux : Relier deux tâches
-  @Mutation(() => Task)
-  async addDependency(
-    @Args('taskId') taskId: string,
-    @Args('dependsOnId') dependsOnId: string,
-  ) {
+  async addDependency(taskId: string, dependsOnId: string) {
     return this.prisma.task.update({
       where: { id: taskId },
       data: {
         dependencies: { connect: { id: dependsOnId } },
       },
     });
+  }
+
+  async changePosition(ChangePositionInput: ChangePositionInput) {
+    return this.prisma.task.update({
+      where: { id: ChangePositionInput.taskId },
+      data: {
+        posX: ChangePositionInput.posX,
+        posY: ChangePositionInput.posY,
+      },
+    });
+  }
+
+}
+
+@Resolver(() => Task)
+export class TasksResolver {
+  constructor(private tasksService: TasksService) {}
+
+  @Mutation()
+  createTask(@Args('input') input: CreateTaskInput) {
+    return this.tasksService.create(input);
+  }
+
+  // Mutation cruciale pour ton flux : Relier deux tâches
+  @Mutation()
+  addDependency(@Args('input') input: AddDependencyInput) {
+    return this.tasksService.addDependency(input.taskId, input.dependsOnId);
+  }
+
+  @Mutation()
+  updateTaskPosition(@Args('input') input: ChangePositionInput) {
+    return this.tasksService.changePosition(input);
   }
 }

@@ -3,6 +3,7 @@ import { Site } from './site.model';
 import { PrismaService } from '../prisma.service';
 import { Task } from 'src/tasks/task.model';
 import { Team } from 'src/teams/team.model';
+import { Inject, Injectable } from '@nestjs/common';
 
 @InputType()
 class CreateSiteInput {
@@ -22,30 +23,15 @@ class CreateSiteInput {
   endDate?: string;
 }
 
+@Injectable()
+export class SitesService {
+  constructor(private prisma: PrismaService) {}
 
-@Resolver(() => Site)
-export class SitesResolver {
-  constructor(private prisma: PrismaService) { }
-
-  @Query(() => [Site], { name: 'sites' })
-  async getSites() {
-    return this.prisma.site.findMany(); // Sans include
+  get() {
+    return this.prisma.site.findMany();
   }
 
-  @ResolveField(() => [Team], { name: 'assignedTeams' })
-  async assignedTeams(@Parent() site: Site, @Context() ctx) {
-    return ctx.teamLoader.load(site.id);
-  }
-
-  @ResolveField(() => [Task], { name: 'tasks' })
-  async tasks(@Parent() site: Site, @Context() ctx) {
-    return ctx.taskLoader.load(site.id);
-  }
-
-  @Mutation(() => Site, { name: 'createSite' })
-  async createSite(
-    @Args('createSiteInput') input: CreateSiteInput
-  ) {
+  create(input: CreateSiteInput) {
     return this.prisma.site.create({
       data: {
         name: input.name,
@@ -59,5 +45,32 @@ export class SitesResolver {
         tasks: true,
       }
     });
+  }
+
+}
+
+
+@Resolver(() => Site)
+export class SitesResolver {
+  constructor(private sitesService: SitesService) { }
+
+  @Query(() => [Site], { name: 'sites' })
+  async getSites() {
+    return this.sitesService.get(); // Sans include
+  }
+
+  @ResolveField(() => [Team], { name: 'assignedTeams' })
+  async assignedTeams(@Parent() site: Site, @Context() ctx) {
+    return ctx.teamLoader.load(site.id);
+  }
+
+  @ResolveField(() => [Task], { name: 'tasks' })
+  async tasks(@Parent() site: Site, @Context() ctx) {
+    return ctx.taskLoader.load(site.id);
+  }
+
+  @Mutation(() => Site, { name: 'createSite' })
+  createSite(@Args('createSiteInput') input: CreateSiteInput) {
+    return this.sitesService.create(input);
   }
 }

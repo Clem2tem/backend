@@ -4,6 +4,7 @@ import { Team } from './team.model';
 import { Worker } from '../workers/worker.model';
 import { PrismaService } from '../prisma.service';
 import { IsNotEmpty, IsString, IsUUID, IsOptional } from 'class-validator';
+import { Inject, Injectable } from '@nestjs/common';
 
 @InputType()
 class CreateTeamInput {
@@ -40,13 +41,44 @@ class AddWorkerInput {
   phone?: string;
 }
 
+@Injectable()
+export class TeamsService {
+  constructor(private prisma: PrismaService) { }
+
+  get() {
+    return this.prisma.team.findMany();
+  }
+
+  create(input: CreateTeamInput) {
+    return this.prisma.team.create({
+      data: {
+        name: input.name,
+        specialty: input.specialty,
+      },
+      include: { workers: true },
+    });
+  }
+
+  addWorkerToTeam(input: AddWorkerInput) {
+    return this.prisma.worker.create({
+      data: {
+        firstName: input.firstName,
+        lastName: input.lastName,
+        phone: input.phone,
+        teamId: input.teamId,
+      },
+    });
+  }
+}
+
+
 @Resolver(() => Team)
 export class TeamsResolver {
-  constructor(private prisma: PrismaService) {}
+  constructor(private teamsService: TeamsService) { }
 
   @Query(() => [Team], { name: 'teams' })
   async getTeams() {
-    return this.prisma.team.findMany();
+    return this.teamsService.get();
   }
 
   @ResolveField(() => [Worker], { name: 'workers' })
@@ -57,29 +89,14 @@ export class TeamsResolver {
   // 2. Créer une nouvelle équipe
   @Mutation(() => Team)
   async createTeam(
-    @Args('input') input: CreateTeamInput,
-  ) {
-    return this.prisma.team.create({
-      data: {
-        name: input.name,
-        specialty: input.specialty,
-      },
-      include: { workers: true },
-    });
+    @Args('input') input: CreateTeamInput,) {
+    return this.teamsService.create(input);
   }
 
   // 3. Ajouter un ouvrier à une équipe spécifique
   @Mutation(() => Worker)
-  async addWorkerToTeam(
-    @Args('input') input: AddWorkerInput,
-  ) {
-    return this.prisma.worker.create({
-      data: {
-        firstName: input.firstName,
-        lastName: input.lastName,
-        phone: input.phone,
-        teamId: input.teamId,
-      },
-    });
+  addWorkerToTeam(
+    @Args('input') input: AddWorkerInput,) {
+    return this.teamsService.addWorkerToTeam(input);
   }
 }
