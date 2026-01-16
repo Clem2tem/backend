@@ -1,7 +1,8 @@
-import { Resolver, Query, InputType, Mutation, Args, Field } from '@nestjs/graphql';
+import { Resolver, Query, InputType, Mutation, Args, Field, ResolveField, Parent, Context } from '@nestjs/graphql';
 import { Worker } from './worker.model';
 import { PrismaService } from '../prisma.service';
 import { IsNotEmpty, IsUUID, IsOptional, IsString, IsNumber } from 'class-validator';
+import { Team } from 'src/teams/team.model';
 
 @InputType()
 class UpdateWorkerInput {
@@ -34,9 +35,12 @@ export class WorkersResolver {
     // Pour voir tous les ouvriers du système (pratique pour une vue RH)
     @Query(() => [Worker], { name: 'workers' })
     async getWorkers() {
-        return this.prisma.worker.findMany({
-            include: { team: true },
-        });
+        return this.prisma.worker.findMany();
+    }
+
+    @ResolveField(() => Team, { name: 'team' })
+    async team(@Parent() worker: Worker, @Context() ctx) {
+        return ctx.teamByIdLoader.load(worker.teamId);
     }
 
     // Pour modifier les coordonnées d'un ouvrier (ex: changement de téléphone)

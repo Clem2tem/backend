@@ -7,7 +7,7 @@ import { SitesResolver } from './sites/sites.resolver';
 import { TeamsResolver } from './teams/teams.resolver';
 import { TasksResolver } from './tasks/tasks.resolver';
 import { WorkersResolver } from './workers/workers.resolver';
-import * as DataLoader from 'dataloader';
+import DataLoader from 'dataloader';
 
 @Module({
   imports: [
@@ -27,7 +27,24 @@ import * as DataLoader from 'dataloader';
               workers.filter(w => w.teamId === teamId)
             );
           }),
-          // ...autres loaders si besoin
+          teamLoader: new DataLoader(async (siteIds: readonly string[]) => {
+            const teams = await prisma.team.findMany({
+              where: { sites: { some: { id: { in: [...siteIds] } } } }
+            });
+            return siteIds.map(siteId =>
+              teams.filter(team =>
+                team.sites.some(site => site.id === siteId)
+              )
+            );
+          }),
+          teamByIdLoader: new DataLoader(async (teamIds: readonly string[]) => {
+            const teams = await prisma.team.findMany({
+              where: { id: { in: [...teamIds] } }
+            });
+            return teamIds.map(teamId =>
+              teams.find(team => team.id === teamId) || null
+            );
+          }),
         };
       },
     }),
@@ -35,4 +52,4 @@ import * as DataLoader from 'dataloader';
   controllers: [],
   providers: [PrismaService, SitesResolver, TeamsResolver, TasksResolver, WorkersResolver],
 })
-export class AppModule {}
+export class AppModule { }

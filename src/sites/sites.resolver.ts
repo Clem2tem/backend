@@ -1,13 +1,15 @@
-import { Resolver, Query, Mutation, Args, InputType, Field } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, InputType, Field, Context, Parent, ResolveField } from '@nestjs/graphql';
 import { Site } from './site.model';
 import { PrismaService } from '../prisma.service';
+import { Task } from 'src/tasks/task.model';
+import { Team } from 'src/teams/team.model';
 
 @InputType()
 class CreateSiteInput {
   @Field()
   name: string;
 
-  @Field({nullable: true}) // Permet de ne pas mettre d'adresse à la création
+  @Field({ nullable: true }) // Permet de ne pas mettre d'adresse à la création
   address?: string;
 
   @Field({ defaultValue: 'PLANNED' })
@@ -20,19 +22,24 @@ class CreateSiteInput {
   endDate?: string;
 }
 
+
 @Resolver(() => Site)
 export class SitesResolver {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   @Query(() => [Site], { name: 'sites' })
   async getSites() {
-    // Crucial : on inclut les relations pour ton planning de flux
-    return this.prisma.site.findMany({
-      include: {
-        assignedTeams: true,
-        tasks: true,
-      }
-    });
+    return this.prisma.site.findMany(); // Sans include
+  }
+
+  @ResolveField(() => [Team], { name: 'assignedTeams' })
+  async assignedTeams(@Parent() site: Site, @Context() ctx) {
+    return ctx.teamLoader.load(site.id);
+  }
+
+  @ResolveField(() => [Task], { name: 'tasks' })
+  async tasks(@Parent() site: Site, @Context() ctx) {
+    return ctx.taskLoader.load(site.id);
   }
 
   @Mutation(() => Site, { name: 'createSite' })
