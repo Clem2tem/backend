@@ -118,7 +118,7 @@ export class TasksResolver {
   constructor(private tasksService: TasksService) {}
 
   @Query(() => [Task])
-  tasks() {
+  getTasks() {
     return this.tasksService.findAll();
   }
 
