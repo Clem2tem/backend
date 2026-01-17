@@ -1,5 +1,5 @@
 
-import { Resolver, Mutation, Args, InputType, Field, Float } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, InputType, Field, Float } from '@nestjs/graphql';
 import { Task } from './task.model';
 import { PrismaService } from '../prisma.service';
 import { IsNotEmpty, IsUUID, IsOptional, IsString, IsNumber } from 'class-validator';
@@ -52,7 +52,7 @@ class AddDependencyInput {
 class ChangePositionInput {
   @Field()
   @IsUUID()
-  taskId: string;
+  id: string;
 
   @Field(() => Float)
   @IsNumber()
@@ -68,6 +68,16 @@ class ChangePositionInput {
 @Injectable()
 export class TasksService {
   constructor(private prisma: PrismaService) {}
+
+  async findAll() {
+    return this.prisma.task.findMany({
+      include: {
+        site: true,
+        team: true,
+        dependencies: true,
+      },
+    });
+  }
 
   async create(input: CreateTaskInput) {
     return this.prisma.task.create({
@@ -93,7 +103,7 @@ export class TasksService {
 
   async changePosition(ChangePositionInput: ChangePositionInput) {
     return this.prisma.task.update({
-      where: { id: ChangePositionInput.taskId },
+      where: { id: ChangePositionInput.id },
       data: {
         posX: ChangePositionInput.posX,
         posY: ChangePositionInput.posY,
@@ -107,18 +117,23 @@ export class TasksService {
 export class TasksResolver {
   constructor(private tasksService: TasksService) {}
 
-  @Mutation()
+  @Query(() => [Task])
+  tasks() {
+    return this.tasksService.findAll();
+  }
+
+  @Mutation(() => Task)
   createTask(@Args('input') input: CreateTaskInput) {
     return this.tasksService.create(input);
   }
 
   // Mutation cruciale pour ton flux : Relier deux tâches
-  @Mutation()
+  @Mutation(() => Task)
   addDependency(@Args('input') input: AddDependencyInput) {
     return this.tasksService.addDependency(input.taskId, input.dependsOnId);
   }
 
-  @Mutation()
+  @Mutation(() => Task)
   updateTaskPosition(@Args('input') input: ChangePositionInput) {
     return this.tasksService.changePosition(input);
   }

@@ -2,19 +2,44 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type Assignment {
-  date: DateTime!
-  id: ID!
-  site: Site!
-  team: Team!
+input AddDependencyInput {
+  dependsOnId: String!
+  taskId: String!
+}
+
+input AddWorkerInput {
+  firstName: String!
+  lastName: String!
+  phone: String
+  teamId: String!
+}
+
+input ChangePositionInput {
+  id: String!
+  posX: Float!
+  posY: Float!
 }
 
 input CreateSiteInput {
-  address: String!
-  endDate: String!
+  address: String
+  endDate: String
   name: String!
   startDate: String!
-  status: String!
+  status: String! = "PLANNED"
+}
+
+input CreateTaskInput {
+  category: String!
+  duration: Float
+  siteId: String!
+  startDate: String
+  teamId: String
+  title: String!
+}
+
+input CreateTeamInput {
+  name: String!
+  specialty: String!
 }
 
 """
@@ -23,28 +48,74 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 scalar DateTime
 
 type Mutation {
-  createAssignment(date: String!, siteId: String!, teamId: String!): Assignment!
+  addDependency(input: AddDependencyInput!): Task!
+  addWorkerToTeam(input: AddWorkerInput!): Worker!
   createSite(createSiteInput: CreateSiteInput!): Site!
+  createTask(input: CreateTaskInput!): Task!
+  createTeam(input: CreateTeamInput!): Team!
+  deleteWorker(input: deleteWorkerInput!): Boolean!
+  updateTaskPosition(input: ChangePositionInput!): Task!
+  updateWorker(input: UpdateWorkerInput!): Worker!
 }
 
 type Query {
-  assignments: [Assignment!]!
   sites: [Site!]!
+  tasks: [Task!]!
   teams: [Team!]!
+  workers: [Worker!]!
 }
 
 type Site {
-  address: String!
-  endDate: DateTime!
+  address: String
+  assignedTeams: [Team]!
+  endDate: DateTime
   id: ID!
   name: String!
   startDate: DateTime!
   status: String!
+  tasks: [Task]!
+}
+
+type Task {
+  category: String!
+  dependencies: [Task]!
+  dependents: [Task]!
+  duration: Float
+  id: ID!
+  posX: Float
+  posY: Float
+  site: Site!
+  siteId: String!
+  startDate: DateTime
+  team: Team
+  teamId: String
+  title: String!
 }
 
 type Team {
   id: ID!
-  members: Int!
   name: String!
+  sites: [Site]!
   specialty: String!
+  tasks: [Task]!
+  workers: [Worker]!
+}
+
+input UpdateWorkerInput {
+  id: String!
+  phone: String
+  teamId: String!
+}
+
+type Worker {
+  firstName: String!
+  id: ID!
+  lastName: String!
+  phone: String
+  team: Team
+  teamId: String!
+}
+
+input deleteWorkerInput {
+  id: String!
 }

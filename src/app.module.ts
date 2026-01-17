@@ -3,10 +3,10 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { PrismaService } from './prisma.service';
-import { SitesResolver } from './sites/sites.resolver';
-import { TeamsResolver } from './teams/teams.resolver';
-import { TasksResolver } from './tasks/tasks.resolver';
-import { WorkersResolver } from './workers/workers.resolver';
+import { SitesResolver, SitesService } from './sites/sites.resolver';
+import { TeamsResolver, TeamsService } from './teams/teams.resolver';
+import { TasksResolver, TasksService } from './tasks/tasks.resolver';
+import { WorkersResolver, WorkersService } from './workers/workers.resolver';
 import DataLoader from 'dataloader';
 
 @Module({
@@ -51,6 +51,6 @@ import DataLoader from 'dataloader';
     }),
   ],
   controllers: [],
-  providers: [PrismaService, SitesResolver, TeamsResolver, TasksResolver, WorkersResolver],
+  providers: [PrismaService, SitesResolver, SitesService, TeamsResolver, TeamsService, TasksResolver, TasksService, WorkersResolver, WorkersService],
 })
 export class AppModule { }
