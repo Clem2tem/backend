@@ -8,6 +8,7 @@ import { TeamsResolver, TeamsService } from './teams/teams.resolver';
 import { TasksResolver, TasksService } from './tasks/tasks.resolver';
 import { WorkersResolver, WorkersService } from './workers/workers.resolver';
 import DataLoader from 'dataloader';
+import { TaskDependency } from './tasks/task-dependency.model';
 
 @Module({
   imports: [
@@ -51,6 +52,6 @@ import DataLoader from 'dataloader';
     }),
   ],
   controllers: [],
-  providers: [PrismaService, SitesResolver, SitesService, TeamsResolver, TeamsService, TasksResolver, TasksService, WorkersResolver, WorkersService],
+  providers: [PrismaService, SitesResolver, SitesService, TeamsResolver, TeamsService, TasksResolver, TasksService, WorkersResolver, WorkersService, TaskDependency],
 })
 export class AppModule { }

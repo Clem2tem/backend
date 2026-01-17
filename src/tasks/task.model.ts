@@ -1,6 +1,7 @@
 import { Field, ID, ObjectType, Float, Int } from '@nestjs/graphql';
 import { Site } from 'src/sites/site.model';
 import { Team } from 'src/teams/team.model';
+import { TaskDependency } from './task-dependency.model';
 
 @ObjectType()
 export class Task {
@@ -37,9 +38,9 @@ export class Task {
     @Field(() => Team, { nullable: true })
     team?: Team;
 
-    @Field(() => [Task], { nullable: 'items' })
-    dependencies?: Task[];
+    @Field(() => [TaskDependency], { nullable: 'itemsAndList' })
+    dependencies?: TaskDependency[];
 
-    @Field(() => [Task], { nullable: 'items' })
-    dependents?: Task[];
+    @Field(() => [TaskDependency], { nullable: 'itemsAndList' })
+    dependents?: TaskDependency[];
 }

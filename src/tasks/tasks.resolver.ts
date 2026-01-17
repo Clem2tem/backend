@@ -46,6 +46,10 @@ class AddDependencyInput {
   @Field()
   @IsUUID()
   dependsOnId: string;
+
+  @Field({ defaultValue: 'sequence' })
+  @IsString()
+  type: string; // 'sequence' | 'parallel' | 'concurrent'
 }
 
 @InputType()
@@ -74,7 +78,11 @@ export class TasksService {
       include: {
         site: true,
         team: true,
-        dependencies: true,
+        dependencies: {
+          include: {
+            dependsOn: true,
+          },
+        },
       },
     });
   }
@@ -92,11 +100,23 @@ export class TasksService {
     });
   }
 
-  async addDependency(taskId: string, dependsOnId: string) {
+  async addDependency(taskId: string, dependsOnId: string, type: string = 'sequence') {
     return this.prisma.task.update({
       where: { id: taskId },
       data: {
-        dependencies: { connect: { id: dependsOnId } },
+        dependencies: {
+          create: {
+            dependsOnId: dependsOnId,
+            type: type,
+          },
+        },
+      },
+      include: {
+        dependencies: {
+          include: {
+            dependsOn: true,
+          },
+        },
       },
     });
   }
@@ -130,7 +150,7 @@ export class TasksResolver {
   // Mutation cruciale pour ton flux : Relier deux tâches
   @Mutation(() => Task)
   addDependency(@Args('input') input: AddDependencyInput) {
-    return this.tasksService.addDependency(input.taskId, input.dependsOnId);
+    return this.tasksService.addDependency(input.taskId, input.dependsOnId, input.type);
   }
 
   @Mutation(() => Task)
