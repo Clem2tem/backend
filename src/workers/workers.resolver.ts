@@ -28,6 +28,28 @@ class deleteWorkerInput {
     id: string;
 }
 
+@InputType()
+class AddWorkerInput {
+    @Field()
+    @IsUUID()
+    teamId: string;
+
+    @Field()
+    @IsNotEmpty({ message: 'Le prénom est requis' })
+    @IsString()
+    firstName: string;
+
+    @Field()
+    @IsNotEmpty({ message: 'Le nom est requis' })
+    @IsString()
+    lastName: string;
+
+    @Field({ nullable: true })
+    @IsOptional()
+    @IsString()
+    phone?: string;
+}
+
 @Injectable()
 export class WorkersService {
     constructor(private prisma: PrismaService) { }
@@ -50,6 +72,17 @@ export class WorkersService {
     delete(input: deleteWorkerInput) {
         return this.prisma.worker.delete({
             where: { id: input.id },
+        });
+    }
+
+    addWorkerToTeam(input: AddWorkerInput) {
+        return this.prisma.worker.create({
+            data: {
+                firstName: input.firstName,
+                lastName: input.lastName,
+                phone: input.phone,
+                teamId: input.teamId,
+            },
         });
     }
 
@@ -77,7 +110,7 @@ export class WorkersResolver {
     async updateWorker(
         @Args('input') input: UpdateWorkerInput,
     ) {
-        try{
+        try {
             return this.workersService.update(input);
         } catch (e) {
             // Optionnel : logger ou lancer une erreur personnalisée
@@ -95,5 +128,12 @@ export class WorkersResolver {
             // Optionnel : logger ou lancer une erreur personnalisée
             throw new Error('Suppression impossible : ' + e.message);
         }
+    }
+
+    // 3. Ajouter un ouvrier à une équipe spécifique
+    @Mutation(() => Worker)
+    addWorkerToTeam(
+        @Args('input') input: AddWorkerInput,) {
+        return this.workersService.addWorkerToTeam(input);
     }
 }

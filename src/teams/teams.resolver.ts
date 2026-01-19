@@ -19,27 +19,7 @@ class CreateTeamInput {
   specialty: string;
 }
 
-@InputType()
-class AddWorkerInput {
-  @Field()
-  @IsUUID()
-  teamId: string;
 
-  @Field()
-  @IsNotEmpty({ message: 'Le prénom est requis' })
-  @IsString()
-  firstName: string;
-
-  @Field()
-  @IsNotEmpty({ message: 'Le nom est requis' })
-  @IsString()
-  lastName: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  phone?: string;
-}
 
 @Injectable()
 export class TeamsService {
@@ -59,16 +39,7 @@ export class TeamsService {
     });
   }
 
-  addWorkerToTeam(input: AddWorkerInput) {
-    return this.prisma.worker.create({
-      data: {
-        firstName: input.firstName,
-        lastName: input.lastName,
-        phone: input.phone,
-        teamId: input.teamId,
-      },
-    });
-  }
+  
 }
 
 
@@ -93,10 +64,4 @@ export class TeamsResolver {
     return this.teamsService.create(input);
   }
 
-  // 3. Ajouter un ouvrier à une équipe spécifique
-  @Mutation(() => Worker)
-  addWorkerToTeam(
-    @Args('input') input: AddWorkerInput,) {
-    return this.teamsService.addWorkerToTeam(input);
-  }
 }
